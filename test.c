@@ -28,21 +28,77 @@ typedef enum  {
 } special_code;
 
 // special_code read_special_code() {
-    
 // }
+
+void printCenteredString(int windowHeight, int windowWidth, const char *str) {
+    int len = strlen(str);  // Calculate the length of the string
+    // Print the left padding
+    int leftPadding = (windowWidth - len) / 2;  // Calculate left padding
+    leftPadding = (leftPadding < 0) ? 0 : leftPadding;
+    for (int i = 0; i < leftPadding; i++) {
+        printf(" ");
+    }
+    // Print the string
+    printf("%s", str);
+    // Move to the next line
+    printf("\n");
+}
+void displayWelcomeScreen(int window_width , int window_height){
+    //clears the whole screen
+    printf("\e[2J");
+
+    //set cursor position to top left
+    printf("\e[H");
+
+    // printf("\e[4m");     // Underline
+    //sets the formatting for upcoming characters
+    printf("\e[49;96m"); 
+    printf("\e[1m");     // Bold
+    printf("\e[6;%d;%dt", 20, 14);
+
+    printf("\e[5m");    
+    for(int i = 0 ; i < window_height/2 -10 ; i++){
+        printf("\n");
+    }                                                                                                                                          
+                                                                                                                                                   
+    printCenteredString(window_height,window_width, " #####   ###  ### ##   ##   # #####   ###    ###  ##            #####   ######    ##  ##  #######  ######   #######");
+    printCenteredString(window_height,window_width, "##   ##   ##  ##  ###  ##  ## ## ##  ## ##   ###  ##           ##   ##   ##  ##   ##  ##   ##   #   ##  ##   ##   #");
+    printCenteredString(window_height,window_width, "##         ####   #### ##     ##    ##   ##   #####            ##        ##  ##   ##  ##   ##       ##  ##   ##    ");
+    printCenteredString(window_height,window_width, " #####      ##    #######     ##    ##   ##    ###              #####    #####    ######   ####     #####    ####  ");
+    printCenteredString(window_height,window_width, "     ##     ##    ## ####     ##    #######   #####                 ##   ##       ##  ##   ##       ## ##    ##    ");
+    printCenteredString(window_height,window_width, "##   ##     ##    ##  ###     ##    ##   ##  ##  ###           ##   ##   ##       ##  ##   ##   #   ## ##    ##   #");
+    printCenteredString(window_height,window_width, " #####     ####   ##   ##    ####   ##   ##  ##  ###            #####   ####      ##  ##  #######  #### ##  #######");
+                                                                                                                     
+    printf("\n");
+    printCenteredString(window_height,window_width,"SyntaxSphere\n");
+    printf("\n");
+    printf("\n");
+    printf("\n");
+    printCenteredString(window_height,window_width," Use arrow keys to move around, and press Ctrl+Q to quit.\n");
+    printCenteredString(window_height,window_width," Use arrow keys to move around, and press Ctrl+Q to quit.\n");
+    printCenteredString(window_height,window_width," Use arrow keys to move around, and press Ctrl+Q to quit.\n");
+    printCenteredString(window_height,window_width," Use arrow keys to move around, and press Ctrl+Q to quit.\n");
+    printCenteredString(window_height,window_width," Use arrow keys to move around, and press Ctrl+Q to quit.\n");
+    // printf("\n");
+    // printf("The window width is %d and window height is %d", window_width,window_height );
+}
 
 int main() {
     struct termios original_termios;
     tcgetattr(STDIN_FILENO, &original_termios);
     enable_raw_mode();
 
-    printf("Hello, world!\n");
-
-    for(int i=0; i<40; i++) {
-        for(int j=0; j<129; j++) {
-            printf(".");
-        }
+    // Get terminal size
+        struct winsize size;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &size) == -1) {
+        perror("ioctl");
+        return 1;
     }
+
+    printf("Terminal width: %d\n", size.ws_col);
+    printf("Terminal height: %d\n", size.ws_row);
+
+    displayWelcomeScreen(size.ws_col,size.ws_row);
     fflush(stdout);
 
     char** g = malloc(sizeof(char*)*10000);
@@ -53,7 +109,7 @@ int main() {
         printf("%c", c);
 
         if(c == '\0') {
-            read_speacial_code();
+            // read_special_code();
         }
         
         // if(c == "upprow") { g--; };
