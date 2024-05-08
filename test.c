@@ -8,7 +8,24 @@
 #include <math.h>
 
 
-
+char* input(){
+	char* array= (char*)malloc(sizeof(char));
+	if(array == NULL){
+		printf("error : malloc failed\n");
+		exit(1);
+	}
+	int i ;
+	for( i = 0 ; array[i-1] != '\n'; i++){
+		array = (char*)realloc(array, sizeof(char)+i+1) ;
+		if(array == NULL){
+			printf("error : realloc failed\n") ;
+			exit(1) ;
+		}
+		scanf("%c", &array[i]) ;
+	}
+	array[i-1] = 0 ;
+}
+	
 typedef enum{
     OTHER,
     UP_ARROW,
@@ -63,9 +80,9 @@ void move_cursor_back(int rows, int cols) {
 }
 
 
-typedef enum {
+enum {
     int mode_t;
-    
+     
 } state;
 
 
@@ -91,17 +108,21 @@ int main() {
     fflush(stdout);
 
     char** g = malloc(sizeof(char*)*10000);
+    g[]
     int line_real;
     int colm_real;
     char c;
     int i = 0 ;
+    int count = 0 ;
+    int countlen = 0 ;
     while(true) {
         read(STDIN_FILENO, &c, 1); 
         printf("%c", c);
+        
         fflush(stdout);
-    
+        
         if(c == 27) {
-            switch (read_speacial_code()) {
+            switch (read_special_code()) {
                 case UP_ARROW:
                     line_real = max(0, line_real-1);
                     break; 
@@ -117,8 +138,18 @@ int main() {
             }
             continue;
         }
-
-        // Check if text already existed at this point
+        else if(c == '\n'){
+            g[++line_real] = malloc(size(char)*100) ;
+            count = 0 ;
+            countlen = 0 ;
+        }
+        else if(count == 99){
+            g[line_real] = realloc(size(char)*100*countlen) ;
+            count = 0 ;
+        }
+        g[line_real][colm_real] = c ;
+        
+            // Check if text already existed at this point
         if(g[line_real][colm_real] == 0) {
             
         }
