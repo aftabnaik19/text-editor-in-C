@@ -8,6 +8,45 @@
 #include <math.h>
 
 
+
+typedef enum{
+    OTHER,
+    UP_ARROW,
+    DOWN_ARROW,
+    RIGHT_ARROW,
+    LEFT_ARROW,
+} special_code ;
+
+int  read_special_code(){
+    char code1 ;
+    char code2 ;
+    char code3 ;
+    special_code  special_code ;
+    read(STDIN_FILENO, &code1, 1);
+    printf("%c",code1) ;
+    if(code1 >= 0 && code1 < 10){
+        read(STDIN_FILENO, &code2, 1);
+        printf("%c", code2) ;   
+    }
+    read(STDIN_FILENO, &code3, 1) ;
+    printf("%c", code3) ;        
+    switch(code3){
+        case 'a' :
+            special_code = UP_ARROW ;
+            break ;
+        case 'b' :
+            special_code = DOWN_ARROW ;
+            break ;
+        case 'c' :
+            special_code = RIGHT_ARROW ;
+            break ;
+        case 'd' :
+            special_code = LEFT_ARROW ; 
+            break ;
+    }
+    return special_code ;
+}
+
 void enable_raw_mode() {
     struct termios raw;
     tcgetattr(STDIN_FILENO, &raw);
@@ -23,12 +62,6 @@ void move_cursor_back(int rows, int cols) {
     printf("\033[%dA\033[%dD", rows, cols); 
 }
 
-typedef enum  {
-    UP_ARROW,
-    DOWN_ARROW,
-    RIGHT_ARROW,
-    LEFT_ARROW,
-} special_code;
 
 typedef enum {
     int mode_t;
@@ -61,11 +94,12 @@ int main() {
     int line_real;
     int colm_real;
     char c;
+    int i = 0 ;
     while(true) {
         read(STDIN_FILENO, &c, 1); 
         printf("%c", c);
         fflush(stdout);
-
+    
         if(c == 27) {
             switch (read_speacial_code()) {
                 case UP_ARROW:
