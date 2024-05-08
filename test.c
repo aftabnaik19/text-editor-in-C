@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <stdbool.h>
+#include <math.h>
+
 
 void enable_raw_mode() {
     struct termios raw;
@@ -27,17 +30,26 @@ typedef enum  {
     LEFT_ARROW,
 } special_code;
 
-// special_code read_special_code() {
+typedef enum {
+    int mode_t;
     
-// }
+} state;
+
+
+int max(int a, int b) {
+    return (a > b) ? a : b;
+}
+
+void render_footer() {
+    
+}
 
 int main() {
     struct termios original_termios;
     tcgetattr(STDIN_FILENO, &original_termios);
     enable_raw_mode();
 
-    printf("Hello, world!\n");
-
+    render_footer();
     for(int i=0; i<40; i++) {
         for(int j=0; j<129; j++) {
             printf(".");
@@ -46,25 +58,37 @@ int main() {
     fflush(stdout);
 
     char** g = malloc(sizeof(char*)*10000);
-    int f;
+    int line_real;
+    int colm_real;
     char c;
     while(true) {
         read(STDIN_FILENO, &c, 1); 
         printf("%c", c);
-
-        if(c == '\0') {
-            read_speacial_code();
-        }
-        
-        // if(c == "upprow") { g--; };
-        // if(c == "right") { f++; };
-        // writeline() { putcursorlinstart; printf(line); flush; }
-        // else if(c is ascii) { (*g)[f] = c; writeline((*g)) }
-        
         fflush(stdout);
-    }
 
-    fflush(stdout);
+        if(c == 27) {
+            switch (read_speacial_code()) {
+                case UP_ARROW:
+                    line_real = max(0, line_real-1);
+                    break; 
+                case DOWN_ARROW:
+                    line_real = line_real;
+                    break;
+                case RIGHT_ARROW:
+                    colm_real = colm_real+1; 
+                    break;
+                case LEFT_ARROW:
+                    colm_real = max(0, colm_real-1);
+                    break;
+            }
+            continue;
+        }
+
+        // Check if text already existed at this point
+        if(g[line_real][colm_real] == 0) {
+            
+        }
+    }
     disable_raw_mode(&original_termios);
 
     return 0;
@@ -73,3 +97,5 @@ int main() {
     // int row, col;
     // scanf("\033[%d;%dR", &row, &col);
     // printf("GOT %d %d\n", row, col);
+    // writeline() { putcursorlinstart; printf(line); flush; }
+    // else if(c is ascii) { (*g)[f] = c; writeline((*g)) }
