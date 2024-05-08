@@ -1,11 +1,13 @@
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <sys/types.h>
+// #include <unistd.h>
+// #include <termios.h>
+// #include <sys/ioctl.h>
+// #include <stdbool.h>
+// #include <math.h>
+
 #include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-#include <stdbool.h>
-#include <math.h>
 
 typedef enum{
     OTHER,
@@ -31,16 +33,16 @@ char read_special_code(){
     return 'f';
 }
 
-void enable_raw_mode() {
-    struct termios raw;
-    tcgetattr(STDIN_FILENO, &raw);
-    raw.c_lflag &= ~(ECHO | ICANON);
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
-}
+// void enable_raw_mode() {
+//     struct termios raw;
+//     tcgetattr(STDIN_FILENO, &raw);
+//     raw.c_lflag &= ~(ECHO | ICANON);
+//     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+// }
 
-void disable_raw_mode(struct termios* original_termios) {
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, original_termios);
-}
+// void disable_raw_mode(struct termios* original_termios) {
+//     tcsetattr(STDIN_FILENO, TCSAFLUSH, original_termios);
+// }
 
 void move_cursor_back(int rows, int cols) {
     printf("\033[%dA\033[%dD", rows, cols); 
@@ -56,20 +58,20 @@ void render_footer() {
 }
 
 int main() {
-    struct termios original_termios;
-    tcgetattr(STDIN_FILENO, &original_termios);
-    enable_raw_mode();
+    // struct termios original_termios;
+    // tcgetattr(STDIN_FILENO, &original_termios);
+    // enable_raw_mode();
 
     printf("\033[1;1H"); 
 
-    struct winsize size;
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &size) == -1) {
-     perror("ioctl");
-     return 1;
-    }
+    // struct winsize size;
+    // if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &size) == -1) {
+    //  perror("ioctl");
+    //  return 1;
+    // }
 
-    int terminal_width = size.ws_col;
-    int terminal_height= size.ws_row;
+    int terminal_width = 100;//size.ws_col;
+    int terminal_height= 100;//size.ws_row;
 
     
     // render_footer();
@@ -95,8 +97,8 @@ int main() {
     int count = 0 ;
     int countlen = 0 ;
     while(true) {
-        read(STDIN_FILENO, &c, 1); 
-   
+        // read(STDIN_FILENO, &c, 1); 
+        c = getch();   
         fflush(stdout);
         if(c == 27) {
             char h = read_special_code();
@@ -193,7 +195,6 @@ int main() {
             colm_real++;
         }
     }
-    disable_raw_mode(&original_termios);
 
     printf("line %d cols %d\n", lines, lines);
     for(int i=0; i<lines+1; i++) {
