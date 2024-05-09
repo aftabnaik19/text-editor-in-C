@@ -20,7 +20,7 @@ typedef enum escseq{
 typedef struct row_state{
   int no_of_char ;
   int line_no ;
-  char line[100];
+  char* line ;
 } row_state;
 
 typedef struct editorState {
@@ -49,13 +49,14 @@ escseq CSI_code(){
 }
 
 void nprintf(row_state* r_state){
-  for(int i = 0 ; i < row_state->no_of_char ; i++){
-    printf("%s", r_state->line) ;
+  for(int i = 0 ; i < r_state->no_of_char ; i++){
+    printf("%c", r_state->line[i]) ;
     fflush(stdout) ;
   }
 }
 
 bool refresh_screen(editorState State, row_state* r_state, int bound ){
+  printf("\e[2J") ;
   printf("\e[1;1H") ;
   fflush(stdout) ;
   // for(int i = 0 ; i < bound ; i++){
@@ -67,6 +68,29 @@ bool refresh_screen(editorState State, row_state* r_state, int bound ){
   fflush(stdout);
   return 0 ;
 }
+
+void backSpace(editorState* State , row_state *r_state){
+  char temp = r_state->line[State->fileposition_x];
+  for( int i = State->fileposition_x -1; i < r_state->no_of_char ; i++){
+    r_state->line[i]=r_state->line[i+1];
+    if(r_state->no_of_char==i){
+      r_state->line[i]='\0';
+      break;
+    }
+  }
+  r_state->no_of_char--;
+  State->fileposition_x--;
+  State->cursorposition_x--;
+}
+
+// void memory_alloc_char(row_state* r_state){
+//   line = malloc(100);//realloc(r_state->line, sizeof(char)*(r_state->no_of_char+1));
+// }
+
+// void memory_alloc_line(editorState* State, row_state* r_state){
+//   r_state = malloc(r_state, sizeof(row_state)*count+1);
+//   (r_state + State->no_of_lines)->line = malloc(1000);
+// }
 
 void handle_CSI(editorState* State, escseq key) {
   switch(key) {
@@ -92,6 +116,7 @@ void handle_CSI(editorState* State, escseq key) {
 // SPECIAL KEY CSI
 bool save_buffer(editorState* State, row_state* r_state){
     //27 special code
+    
     char input;
     read(STDIN_FILENO, &input, 1);
     switch(input) {
@@ -99,19 +124,22 @@ bool save_buffer(editorState* State, row_state* r_state){
         escseq key = CSI_code();
         handle_CSI(State, key);
         break;
-      case '\b':
+      case 127:
+            backSpace(State ,r_state);
         break;
       case '\n':
-        // colm_real=0;
-        // line_real++;
-        // g[line_real] = calloc(100, sizeof(char));
-        // lines = max(line_real, lines);
+        r_state[State->fileposition_y].no_of_char=State->fileposition_x;
+        State->fileposition_x++;
+        // memory_alloc_line(State, r_state);
+        r_state[State->no_of_lines].line_no = State->fileposition_y+1;
+        State->no_of_lines++;
         break;
       default: 
          for(int i=89; i>=State->fileposition_x+1; i--) {
              r_state[State->fileposition_y].line[i] = r_state[State->fileposition_y].line[i-1];
           }
       if(isalnum(input) || isspace(input)) {
+        // memory_alloc_char(r_state+State->fileposition_y);
         r_state[State->fileposition_y].line[State->fileposition_x] = input;
         State->cursorposition_x++;
         State->fileposition_x++;
@@ -155,7 +183,10 @@ void initEditor(editorState* State){
 
 int main(int argc,char* argv[]){
   editorState State ;
-  row_state *r_state = malloc(sizeof(row_state));
+  // row_state *r_state = calloc(100, sizeof(row_state));
+  row_state *r_state = malloc(sizeof(row_state)*10000);
+  r_state->line = malloc(sizeof(char)*1000);
+  r_state->line_no = 1;
   bool changeflag = 0 ;
   enable_raw_mode() ;
   initEditor(&State) ;
