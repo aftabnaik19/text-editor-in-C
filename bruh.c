@@ -6,7 +6,7 @@
 #include <sys/ioctl.h>
 #include <stdbool.h>
 #include <math.h>
-
+#include <string.h>
 #include <ctype.h>
 
 typedef enum escseq{
@@ -48,21 +48,26 @@ escseq CSI_code(){
  
 }
 
+int min(int a, int b) {
+    return (a < b) ? a : b;
+}
 void nprintf(row_state* r_state){
   for(int i = 0 ; i < r_state->no_of_char ; i++){
     printf("%c", r_state->line[i]) ;
     fflush(stdout) ;
   }
+  printf("\n") ;
+  fflush(stdout) ;
 }
 
 bool refresh_screen(editorState State, row_state* r_state, int bound ){
   printf("\e[2J") ;
   printf("\e[1;1H") ;
   fflush(stdout) ;
-  // for(int i = 0 ; i < bound ; i++){
-    nprintf(r_state) ;
-    // fflush(stdout);
-  // }
+  for(int i = 0 ; i < bound ; i++){
+    nprintf(r_state+i) ;
+    fflush(stdout);
+  }
   // printf("UPDATED CURSOR TO %d %d",State.cursorposition_y, State.cursorposition_x );
   printf("\e[%d;%dH", State.cursorposition_y+1, State.cursorposition_x+1);
   fflush(stdout);
@@ -125,14 +130,34 @@ bool save_buffer(editorState* State, row_state* r_state){
         handle_CSI(State, key);
         break;
       case 127:
-            backSpace(State ,r_state);
+            backSpace(State ,r_state+State->fileposition_y);
         break;
       case '\n':
-        r_state[State->fileposition_y].no_of_char=State->fileposition_x;
-        State->fileposition_x++;
-        // memory_alloc_line(State, r_state);
-        r_state[State->no_of_lines].line_no = State->fileposition_y+1;
+      
+        int pos_y = ++(State->cursorposition_y);
+        int pos_x = (State->fileposition_x);
+        State->fileposition_y++;
+
+        row_state *new_row = r_state + pos_y;
+        row_state *curr_row = r_state + pos_y - 1;
+      
+        // Allocate space for next line
+        new_row->line = malloc(sizeof(char) * 100);
+        new_row->no_of_char = curr_row->no_of_char - pos_x +1;
+        new_row->line_no = pos_y + 1;
+
+        // Copy the text after the cursor to new line
+        memcpy(new_row->line, curr_row->line+pos_x, new_row->no_of_char+1);
+      
+      
+        curr_row->no_of_char = pos_x;
+        curr_row->line[pos_x] = 0;
+
+        // Update the state
         State->no_of_lines++;
+        State->fileposition_x= 0;
+        State->cursorposition_x=0;
+      
         break;
       default: 
          for(int i=89; i>=State->fileposition_x+1; i--) {
@@ -184,7 +209,7 @@ void initEditor(editorState* State){
 int main(int argc,char* argv[]){
   editorState State ;
   // row_state *r_state = calloc(100, sizeof(row_state));
-  row_state *r_state = malloc(sizeof(row_state)*10000);
+  row_state *r_state = malloc(sizeof(row_state)*10);
   r_state->line = malloc(sizeof(char)*1000);
   r_state->line_no = 1;
   bool changeflag = 0 ;
@@ -193,10 +218,6 @@ int main(int argc,char* argv[]){
   State.no_of_lines=1;
   while(1){
     char ch;
-    // read(STDIN_FILENO, &ch, 1);
-    // printf("%c", ch);
-    // fflush(stdout);
-    // if(changeflag) 
       changeflag = refresh_screen(State ,r_state, State.no_of_lines) ;
       changeflag = save_buffer(&State,r_state) ;
   }
