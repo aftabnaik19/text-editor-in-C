@@ -86,11 +86,11 @@ void displayWelcomeScreen(int window_width , int window_height){
 
 void saveToFile(){
     
-    // Declare the file pointer
     FILE* filePointer;
- 
+    //change total string to no_of_lines
+    int total_strings = 50  , max_string_length=20;
     // Get the data to be written in file
-    char data[50] ;
+    char data[50][20] ;
  
     // Open the existing file GfgTest.c using fopen()
     // in write mode using "w" attribute
@@ -102,16 +102,26 @@ void saveToFile(){
         printf("output.txt file failed to open.");
     }
     else {
+
+        for(int i = 0 ; i < 50 ; i++){
+            for(int j = 0 ; j < 20 ; j++){
+                data[i][j] = (char)('A'+i+j);
+            }
+            // if (strlen(data[i]) > 0) {
+            for(int j = 0 ; j < 20 ; j++){
+                if(data[i][j]=='\n')break;
+                fprintf(filePointer,"%c", data[i][j] );
+            }
+    
+                // writing in the file using fputs()
+                // fputs(data[i], filePointer);
+                fputs("\n", filePointer);
+             
+        }
  
         printf("The file is now opened.\n");
  
         // Write the dataToBeWritten into the file
-        if (strlen(data) > 0) {
- 
-            // writing in the file using fputs()
-            fputs(data, filePointer);
-            fputs("\n", filePointer);
-        }
  
         // Closing the file using fclose()
         fclose(filePointer);
