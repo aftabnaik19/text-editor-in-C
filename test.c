@@ -79,17 +79,53 @@ void displayWelcomeScreen(int window_width , int window_height){
     printCenteredString(window_height,window_width," Use arrow keys to move around, and press Ctrl+Q to quit.\n");
     printCenteredString(window_height,window_width," Use arrow keys to move around, and press Ctrl+Q to quit.\n");
     printCenteredString(window_height,window_width," Use arrow keys to move around, and press Ctrl+Q to quit.\n");
+    saveToFile();
     // printf("\n");
     // printf("The window width is %d and window height is %d", window_width,window_height );
+}
+
+void saveToFile(){
+    
+    // Declare the file pointer
+    FILE* filePointer;
+ 
+    // Get the data to be written in file
+    char data[50] ;
+ 
+    // Open the existing file GfgTest.c using fopen()
+    // in write mode using "w" attribute
+    filePointer = fopen("output.txt", "w");
+ 
+    // Check if this filePointer is null
+    // which maybe if the file does not exist
+    if (filePointer == NULL) {
+        printf("output.txt file failed to open.");
+    }
+    else {
+ 
+        printf("The file is now opened.\n");
+ 
+        // Write the dataToBeWritten into the file
+        if (strlen(data) > 0) {
+ 
+            // writing in the file using fputs()
+            fputs(data, filePointer);
+            fputs("\n", filePointer);
+        }
+ 
+        // Closing the file using fclose()
+        fclose(filePointer);
+ 
+        printf("Data successfully written in file ");
+    }
 }
 
 int main() {
     struct termios original_termios;
     tcgetattr(STDIN_FILENO, &original_termios);
     enable_raw_mode();
-
     // Get terminal size
-        struct winsize size;
+    struct winsize size;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &size) == -1) {
         perror("ioctl");
         return 1;
