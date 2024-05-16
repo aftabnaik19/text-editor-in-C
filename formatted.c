@@ -33,6 +33,23 @@ typedef struct editorState {
   FILE *fp ; 
 } editorState ;
 
+void render_headder(editorState State) {
+    printf("\033[1;1H"); 
+    printf("\033[47m \033[30;47m");
+    printf("  Spring Syntax");
+    for(int j=0; j<State.screen_cols-16; j++) printf(" ");
+    printf("\033[1;1H\033[1B\033[1B\033[0m");
+    fflush(stdout);
+}
+
+void render_footer(editorState State) {
+    printf("\033[%d;%dH", State.screen_rows-1, 1); 
+    printf("\033[47m \033[30;47m");
+    printf(" Ins | line %d col %d", State.fileposition_y, State.fileposition_x);
+    for(int j=0; j<State.screen_cols-25; j++) printf(" ");
+    printf("\033[1;1H\033[0m");
+    fflush(stdout);
+}
 
 int min(int a, int b) {
     return (a < b) ? a : b;
@@ -154,6 +171,7 @@ void handle_CSI(editorState* State, escseq key, row_state * r_state) {
 
 void backSpace(editorState *State , row_state *r_state){
   char temp = r_state->line[State->fileposition_x];
+  if(State->fileposition_x <= 0) return;
   for( int i = State->fileposition_x -1; i < r_state->no_of_char ; i++){
     r_state->line[i]=r_state->line[i+1];
     if(r_state->no_of_char==i){
@@ -228,11 +246,12 @@ void move_cursor_to_home() {
 
 void nprintf(row_state *r_state, editorState State){
   move_cursor_to_home() ;
-  cursor_to(r_state->line_no, 4);
+  cursor_to(r_state->line_no + 2, 4);
   printf("\e[0K") ;
-  if(State.fileposition_y+1 == r_state->line_no)
-  printf("%d\t| ", r_state->line_no);
-  else printf("%d\t  ", r_state->line_no);
+  printf("\e[1;30m%d\t", r_state->line_no);
+  if(State.fileposition_y+1 == r_state->line_no) printf("|");
+  else printf(" ");
+  printf(" \e[1;0m");
   fflush(stdout) ;
   for(int i = 0 ; i < r_state->no_of_char ; i++){
     printf("%c", r_state->line[i]) ;
@@ -244,12 +263,14 @@ void nprintf(row_state *r_state, editorState State){
 
 bool refresh_screen(editorState State, row_state *r_state, int bound ){
   // clear_display() ;
+  render_headder(State);
+  render_footer(State);
   move_cursor_to_home() ;
   printf("\e[?25l");
   for(int i = 0 ; i < bound ; i++){
     nprintf(r_state+i, State) ;
   }
-  cursor_to(State.fileposition_y+1, State.fileposition_x+11) ;
+  cursor_to(State.fileposition_y+3, State.fileposition_x+11) ;
   printf("\e[?25h");
   fflush(stdout);
   return 0 ;
@@ -290,7 +311,7 @@ int main(int argc,char *argv[]){
   for(int i=0; i < 10; i++) State.index_table[i] = i;
   r_state->line = malloc(sizeof(char)*1000);
   r_state->line_no = 1;
-  bool changeflag = 0 ;
+  bool changeflag = 1 ;
   enable_raw_mode() ;
   initEditor(&State) ;
   while(1){
