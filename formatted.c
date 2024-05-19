@@ -9,6 +9,9 @@
 #include <string.h>
 #include <ctype.h>
 
+#define max(x, y) ((x) > (y) ? (x) : (y))
+#define min(x, y) ((x) < (y) ? (x) : (y))
+
 typedef enum escseq{
   OTHER ,
   UP ,
@@ -51,10 +54,6 @@ void render_footer(editorState State) {
     fflush(stdout);
 }
 
-int min(int a, int b) {
-    return (a < b) ? a : b;
-}
-
 row_state* get_row_at(editorState *State, row_state *r_state, int position) {
   return r_state+ State->index_table[State->fileposition_y];
 } 
@@ -71,6 +70,7 @@ void newline(editorState* State, row_state** r_state){
   
   row_state *new_row =  *r_state + State->no_of_lines;
   row_state *curr_row = get_row_at(State, *r_state, pos_y);
+  
   // Allocate space for next line
   new_row->line = malloc(sizeof(char) * 100);
   new_row->no_of_char = curr_row->no_of_char - pos_x;
@@ -82,13 +82,13 @@ void newline(editorState* State, row_state** r_state){
   curr_row->no_of_char = pos_x;
   curr_row->line[pos_x] = 0;
 
-  // Update the state
-    // update the index table
+  // update the index table
   pos_y++;
   for(int i=State->no_of_lines; i> pos_y ; i--)
      State->index_table[i] = State->index_table[i-1];
   State->index_table[pos_y] = State->no_of_lines;
 
+  // Update the state
   State->no_of_lines++;
   State->fileposition_x= 0;
   for(int i=0; i<State->no_of_lines-1; i++) {
@@ -120,49 +120,39 @@ escseq CSI_code(){
     case 'D' : return LEFT ;
     default : return OTHER ;
   }
- }
+}
 
 
 void handle_CSI(editorState* State, escseq key, row_state * r_state) {
   switch(key) {
     case UP:
-      if(State->fileposition_y != 0){ // currently not on the first line  
-        State->fileposition_y--;
-        if(State->fileposition_x > r_state[State->index_table[State->fileposition_y]].no_of_char){
-          State->fileposition_x = r_state[State->index_table[State->fileposition_y]].no_of_char;    // set the x in bound if out of bound after going down in line
-        }
-      }
+        State->fileposition_y = max(State->fileposition_y - 1, 0);
+        State->fileposition_x = min(r_state[State->index_table[State->fileposition_y]].no_of_char, State->fileposition_x);
       break;
     case DOWN:
-      
-      if(State->fileposition_y != State->no_of_lines-1){ // currently not on the last line  
-        State->fileposition_y++;
-        if(State->fileposition_x > r_state[State->index_table[State->fileposition_y]].no_of_char){
-          State->fileposition_x = r_state[State->index_table[State->fileposition_y]].no_of_char;    // set the x in bound if out of bound after going down in line
-        }
-      }
+        State->fileposition_y = min(State->fileposition_y + 1, State->no_of_lines - 1);
+        State->fileposition_x = min(r_state[State->index_table[State->fileposition_y]].no_of_char, State->fileposition_x);
       break;
     case RIGHT:
-      if(State->fileposition_x == r_state[State->index_table[State->fileposition_y]].no_of_char ){      
-              
-           if(State->fileposition_y + 1 <= State->no_of_lines-1 ){  // next line exists
-             State->fileposition_y++;
-             State->fileposition_x = 0;
-            }         
-      }else{ // cursor was between somewhere in the line
+      if(State->fileposition_x == r_state[State->index_table[State->fileposition_y]].no_of_char ){
+         // next line exists     
+        if(State->fileposition_y + 1 < State->no_of_lines){  
+         State->fileposition_y++;
+         State->fileposition_x = 0;
+        }         
+      } else { 
         State->fileposition_x++;
       }
       break;
       
     case LEFT:
-      //State->fileposition_x--;
-      if(State->fileposition_x == 0){  // check if cursor was at the beginning of line            
-         // go to the above line last char
-         if(State->fileposition_y - 1 >= 0 ){  // prev line exists
+      if(State->fileposition_x == 0) {              
+         // prev line exists
+         if(State->fileposition_y - 1 >= 0 ){  
            State->fileposition_y--;
            State->fileposition_x = r_state[State->index_table[State->fileposition_y]].no_of_char;
         }
-      }else{ // cursor was between somewhere in the line
+      } else {  
         State->fileposition_x--;
       }
       break;
@@ -171,6 +161,8 @@ void handle_CSI(editorState* State, escseq key, row_state * r_state) {
 
 void backSpace(editorState *State , row_state *r_state){
   char temp = r_state->line[State->fileposition_x];
+
+  // TODO: append the text in current line to upper line 
   if(State->fileposition_x <= 0) return;
   for( int i = State->fileposition_x -1; i < r_state->no_of_char ; i++){
     r_state->line[i]=r_state->line[i+1];
@@ -193,48 +185,17 @@ bool save_buffer(editorState *State, row_state **r_state){
         handle_CSI(State, key, *r_state);
         break;
       case 127:
-            backSpace(State , get_row_at(State, *r_state, State->fileposition_y));
+        backSpace(State , get_row_at(State, *r_state, State->fileposition_y));
         break;
       case '\n':
-
         newline(State, r_state);
-        // int pos_y = ++(State->fileposition_y);
-        // int pos_x = (State->fileposition_x);
-
-        // row_state *new_row = r_state + State->no_of_lines;
-        // row_state *curr_row = r_state + pos_y - 1;
-      
-        // // Allocate space for next line
-        // new_row->line = malloc(sizeof(char) * 100);
-        // new_row->no_of_char = curr_row->no_of_char - pos_x +1;
-        // new_row->line_no = pos_y + 1;
-
-        // // Copy the text after the cursor to new line
-        // memcpy(new_row->line, curr_row->line+pos_x, new_row->no_of_char+1);
-      
-      
-        // curr_row->no_of_char = pos_x;
-        // curr_row->line[pos_x] = 0;
-
-        // // Update the state
-        // State->no_of_lines++;
-        // State->fileposition_x= 0;
-        // for(int i=0; i<State->no_of_lines-1; i++) {
-        //   if((r_state+i)->line_no >= new_row->line_no) {
-        //     (r_state+i)->line_no++;
-        //   }
-        // }
-        // State->fileposition_y=State->no_of_lines-1;
-     
         break;
       default: 
          for(int i=89; i>=State->fileposition_x+1; i--) {
              (*r_state)[State->index_table[State->fileposition_y]].line[i] = (*r_state)[State->index_table[State->fileposition_y]].line[i-1];
           }
-        // r_state[State->fileposition_y].line[State->fileposition_x] = input;
         get_row_at(State, *r_state, State->fileposition_y)->line[State->fileposition_x] = input;
         State->fileposition_x++;
-        // r_state[State->fileposition_y].no_of_char++;
         get_row_at(State, *r_state, State->fileposition_y)->no_of_char++;
     }
     return 1 ;
@@ -262,7 +223,6 @@ void nprintf(row_state *r_state, editorState State){
 }
 
 bool refresh_screen(editorState State, row_state *r_state, int bound ){
-  // clear_display() ;
   render_headder(State);
   render_footer(State);
   move_cursor_to_home() ;
