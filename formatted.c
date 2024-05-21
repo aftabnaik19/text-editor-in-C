@@ -12,21 +12,21 @@
 #define max(x, y) ((x) > (y) ? (x) : (y))
 #define min(x, y) ((x) < (y) ? (x) : (y))
 
-typedef enum escseq{
+typedef enum {
   OTHER ,
   UP ,
   DOWN ,
   RIGHT ,
   LEFT 
-}escseq ;
+} escseq ;
 
-typedef struct row_state{
+typedef struct {
   int no_of_char ;
   int line_no ;
   char* line ;
 } row_state;
 
-typedef struct editorState {
+typedef struct {
   int fileposition_x, fileposition_y ;
   int offset_x, offset_y ;
   int screen_rows ;
@@ -110,7 +110,6 @@ void cursor_to(int y,int x){
 
 escseq CSI_code(){
   char ch ; 
-  escseq escseq ;
   read(STDIN_FILENO, &ch, 1) ;//ignore
   read(STDIN_FILENO, &ch, 1) ;
   switch(ch){
@@ -156,13 +155,13 @@ void handle_CSI(editorState* State, escseq key, row_state * r_state) {
         State->fileposition_x--;
       }
       break;
+    default: {}
   }
 }
 
+// TODO: Remove a line to backspace on last character
 void backSpace(editorState *State , row_state *r_state){
-  char temp = r_state->line[State->fileposition_x];
 
-  // TODO: append the text in current line to upper line 
   if(State->fileposition_x <= 0) return;
   for( int i = State->fileposition_x -1; i < r_state->no_of_char ; i++){
     r_state->line[i]=r_state->line[i+1];
@@ -180,10 +179,12 @@ bool save_buffer(editorState *State, row_state **r_state){
     char input;
     read(STDIN_FILENO, &input, 1);
     switch(input) {
-      case '\e':
+      case '\e': 
+      {
         escseq key = CSI_code();
         handle_CSI(State, key, *r_state);
         break;
+      }
       case 127:
         backSpace(State , get_row_at(State, *r_state, State->fileposition_y));
         break;
