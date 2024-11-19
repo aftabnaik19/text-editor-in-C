@@ -46,6 +46,7 @@ A lightweight, terminal-based text editor implemented in C. Inspired by minimali
 ---
 
 ## Usage
+![WhatsApp Image 2024-11-20 at 00 15 18_d5b684fd](https://github.com/user-attachments/assets/9b1f7aae-e085-4a10-9b10-f87aed71913d)
 
 ### Modes
 - **Normal Mode**: Default mode. Used for navigation and commands.
